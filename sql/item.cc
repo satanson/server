@@ -1263,8 +1263,19 @@ Item *Item::const_charset_converter(CHARSET_INFO *tocs,
   DBUG_ASSERT(fixed);
   StringBuffer<64>tmp;
   String *s= val_str(&tmp);
-  if (!s)
+
+  /* Functions that return NULL during prepare must not be replaced with
+     Item_null as they may return non-null values during execution.
+     Ex: CURRENT_ROLE() during view creation time can be NULL if no role
+     is set. */
+  if (!s && !func_name)
     return new Item_null((char *) func_name, tocs);
+
+  if (!s)
+  {
+    tmp.set_ascii("", 0);
+    s = &tmp;
+  }
 
   if (!needs_charset_converter(s->length(), tocs))
   {
