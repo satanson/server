@@ -377,6 +377,16 @@ xtrabackup_add_datasink(ds_ctxt_t *ds)
 }
 
 /* ======== Datafiles iterator ======== */
+struct datafiles_iter_t {
+	fil_system_t	*system;
+	fil_space_t	*space;
+	fil_node_t	*node;
+	ibool		started;
+	pthread_mutex_t	mutex;
+};
+
+/* ======== Datafiles iterator ======== */
+static
 datafiles_iter_t *
 datafiles_iter_new(fil_system_t *f_system)
 {
@@ -393,6 +403,7 @@ datafiles_iter_new(fil_system_t *f_system)
 	return it;
 }
 
+static
 fil_node_t *
 datafiles_iter_next(datafiles_iter_t *it)
 {
@@ -430,6 +441,7 @@ end:
 	return new_node;
 }
 
+static
 void
 datafiles_iter_free(datafiles_iter_t *it)
 {
@@ -5498,44 +5510,44 @@ error:
 		goto error_cleanup;
 
 	if (xtrabackup_incremental) {
+		/* In case FSP_SIZE was increased by .delta files,
+		we must extend the files accordingly. MDEV-11556 only
+		covers tablespace file extension via the redo log. */
+		mutex_enter(&fil_system->mutex);
 
-	it = datafiles_iter_new(fil_system);
-	if (it == NULL) {
-		msg("xtrabackup: Error: datafiles_iter_new() failed.\n");
-		exit(EXIT_FAILURE);
-	}
+		for (fil_space_t* space
+		     = UT_LIST_GET_FIRST(fil_system->space_list);
+		     space != NULL;
+		     space = UT_LIST_GET_NEXT(space_list, space)) {
+			if (UT_LIST_GET_LEN(space->chain) == 0
+			    || space->purpose != FIL_TYPE_TABLESPACE
+			    || space->is_stopping()) {
+				continue;
+			}
 
-	while (fil_node_t* node = datafiles_iter_next(it)) {
-		ulint		actual_size;
+			space->n_pending_ops++;
+			mutex_exit(&fil_system->mutex);
 
-		/* Align space sizes along with fsp header. We want to process
-		each space once, so skip all nodes except the first one in a
-		multi-node space. */
-		if (UT_LIST_GET_PREV(chain, node) != NULL) {
-			continue;
+			mtr_t		mtr;
+			mtr.start();
+
+			mtr_s_lock(&space->latch, &mtr);
+
+			buf_block_t*	block	= buf_page_get(
+				page_id_t(space->id, 0),
+				page_size_t(space->flags), RW_S_LATCH, &mtr);
+
+			unsigned	size	= mach_read_from_4(
+				FSP_HEADER_OFFSET + FSP_SIZE + block->frame);
+
+			mtr.commit();
+
+			fil_space_extend(space, size);
+
+			mutex_enter(&fil_system->mutex);
+			fil_space_release(space);
 		}
-
-		mtr_t		mtr;
-		fil_space_t*	space	= node->space;
-		mtr.start();
-
-		mtr_s_lock(&space->latch, &mtr);
-
-		buf_block_t*	block	= buf_page_get(
-			page_id_t(space->id, 0), page_size_t(space->flags),
-			RW_S_LATCH, &mtr);
-
-		unsigned	size	= mach_read_from_4(
-			FSP_HEADER_OFFSET + FSP_SIZE + block->frame);
-
-		mtr.commit();
-
-		fil_extend_space_to_desired_size(&actual_size, space->id, size);
 	}
-
-	datafiles_iter_free(it);
-
-	} /* if (xtrabackup_incremental) */
 
 	/* merge the change buffer and complete the purge at shutdwon */
 	srv_fast_shutdown = !xtrabackup_export;
