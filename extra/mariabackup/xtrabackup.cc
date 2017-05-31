@@ -4102,7 +4102,7 @@ retry:
 			    "'xtrabackup_logfile'. will retry.\n");
 
 			os_file_close(src_file);
-			src_file = XB_FILE_UNDEFINED;
+			src_file = OS_FILE_CLOSED;
 
 			/* rename and try again */
 			success = os_file_rename(0, dst_path, src_path);
@@ -4118,7 +4118,7 @@ retry:
 		src_path);
 
 		os_file_close(src_file);
-		src_file = XB_FILE_UNDEFINED;
+		src_file = OS_FILE_CLOSED;
 
 		goto error;
 	}
@@ -4286,7 +4286,7 @@ not_consistent:
 	    "start_lsn=(" LSN_PF ")\n", file_size, max_lsn);
 
 	os_file_close(src_file);
-	src_file = XB_FILE_UNDEFINED;
+	src_file = OS_FILE_CLOSED;
 
 	/* fake InnoDB */
 	innobase_log_files_in_group_save = innobase_log_files_in_group;
@@ -4311,12 +4311,12 @@ not_consistent:
 skip_modify:
 	free(log_buf);
 	os_file_close(src_file);
-	src_file = XB_FILE_UNDEFINED;
+	src_file = OS_FILE_CLOSED;
 	return(false);
 #endif
 error:
 	free(log_buf);
-	if (src_file != XB_FILE_UNDEFINED)
+	if (src_file != OS_FILE_CLOSED)
 		os_file_close(src_file);
 	msg("xtrabackup: Error: xtrabackup_init_temp_log() failed.\n");
 	return(true); /*ERROR*/
@@ -4789,18 +4789,18 @@ xtrabackup_apply_delta(
 
 	if (incremental_buffer_base)
 		ut_free(incremental_buffer_base);
-	if (src_file != XB_FILE_UNDEFINED)
+	if (src_file != OS_FILE_CLOSED)
 		os_file_close(src_file);
-	if (dst_file != XB_FILE_UNDEFINED)
+	if (dst_file != OS_FILE_CLOSED)
 		os_file_close(dst_file);
 	return TRUE;
 
 error:
 	if (incremental_buffer_base)
 		ut_free(incremental_buffer_base);
-	if (src_file != XB_FILE_UNDEFINED)
+	if (src_file != OS_FILE_CLOSED)
 		os_file_close(src_file);
-	if (dst_file != XB_FILE_UNDEFINED)
+	if (dst_file != OS_FILE_CLOSED)
 		os_file_close(dst_file);
 	msg("xtrabackup: Error: xtrabackup_apply_delta(): "
 	    "failed to apply %s to %s.\n", src_path, dst_path);
@@ -5750,9 +5750,9 @@ skip_check:
 				goto next_node;
 			}
 next_node:
-			if (info_file != XB_FILE_UNDEFINED) {
+			if (info_file != OS_FILE_CLOSED) {
 				os_file_close(info_file);
-				info_file = XB_FILE_UNDEFINED;
+				info_file = OS_FILE_CLOSED;
 			}
 			mutex_exit(&(dict_sys->mutex));
 		}
