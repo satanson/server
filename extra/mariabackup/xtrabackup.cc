@@ -382,8 +382,7 @@ datafiles_iter_new(fil_system_t *f_system)
 {
 	datafiles_iter_t *it;
 
-	it = static_cast<datafiles_iter_t *>
-		(ut_malloc(sizeof(datafiles_iter_t)));
+	it = static_cast<datafiles_iter_t *>(malloc(sizeof(datafiles_iter_t)));
 	it->mutex = os_mutex_create();
 
 	it->system = f_system;
@@ -435,7 +434,7 @@ void
 datafiles_iter_free(datafiles_iter_t *it)
 {
 	os_mutex_free(it->mutex);
-	ut_free(it);
+	free(it);
 }
 
 /* ======== Date copying thread context ======== */
@@ -2222,7 +2221,7 @@ xb_get_zip_size(pfs_os_file_t file)
 	byte	*page;
 	ulint	 zip_size;
 
-	buf = static_cast<byte *>(ut_malloc(2 * UNIV_PAGE_SIZE));
+	buf = static_cast<byte *>(malloc(2 * UNIV_PAGE_SIZE));
 	page = static_cast<byte *>(ut_align(buf, UNIV_PAGE_SIZE));
 
 	IORequest request(IORequest::READ);
@@ -2236,7 +2235,7 @@ xb_get_zip_size(pfs_os_file_t file)
 		zip_size = ULINT_UNDEFINED;
 	}
 
-	ut_free(buf);
+	free(buf);
 
 	return(zip_size);
 }
@@ -3050,7 +3049,7 @@ xb_new_filter_entry(
 	ut_a(namelen <= NAME_LEN * 2 + 1);
 
 	entry = static_cast<xb_filter_entry_t *>
-		(ut_malloc(sizeof(xb_filter_entry_t) + namelen + 1));
+		(malloc(sizeof(xb_filter_entry_t) + namelen + 1));
 	memset(entry, '\0', sizeof(xb_filter_entry_t) + namelen + 1);
 	entry->name = ((char*)entry) + sizeof(xb_filter_entry_t);
 	strcpy(entry->name, name);
@@ -3349,7 +3348,7 @@ xb_filter_hash_free(hash_table_t* hash)
 
 			HASH_DELETE(xb_filter_entry_t, name_hash, hash,
 				ut_fold_string(prev_table->name), prev_table);
-			ut_free(prev_table);
+			free(prev_table);
 		}
 	}
 
@@ -3888,7 +3887,7 @@ reread_log_header:
 
 	/* Create data copying threads */
 	data_threads = (data_thread_ctxt_t *)
-		ut_malloc(sizeof(data_thread_ctxt_t) * xtrabackup_parallel);
+		malloc(sizeof(data_thread_ctxt_t) * xtrabackup_parallel);
 	count = xtrabackup_parallel;
 	pthread_mutex_init(&count_mutex, NULL);
 
@@ -3913,7 +3912,7 @@ reread_log_header:
 	}
 
 	pthread_mutex_destroy(&count_mutex);
-	ut_free(data_threads);
+	free(data_threads);
 	datafiles_iter_free(it);
 
 	if (changed_page_bitmap) {
@@ -4383,7 +4382,7 @@ xb_space_create_file(
 		return ret;
 	}
 
-	buf = static_cast<byte *>(ut_malloc(3 * UNIV_PAGE_SIZE));
+	buf = static_cast<byte *>(malloc(3 * UNIV_PAGE_SIZE));
 	/* Align the memory for file i/o if we might have O_DIRECT set */
 	page = static_cast<byte *>(ut_align(buf, UNIV_PAGE_SIZE));
 
@@ -4419,7 +4418,7 @@ xb_space_create_file(
 				    zip_size);
 	}
 
-	ut_free(buf);
+	free(buf);
 
 	if (!ret) {
 		msg("xtrabackup: could not write the first page to %s\n",
@@ -4495,7 +4494,7 @@ xb_delta_open_matching_space(
 
 	/* remember space name for further reference */
 	table = static_cast<xb_filter_entry_t *>
-		(ut_malloc(sizeof(xb_filter_entry_t) +
+		(malloc(sizeof(xb_filter_entry_t) +
 			strlen(dest_space_name) + 1));
 
 	table->name = ((char*)table) + sizeof(xb_filter_entry_t);
@@ -4708,8 +4707,7 @@ xtrabackup_apply_delta(
 
 	/* allocate buffer for incremental backup (4096 pages) */
 	incremental_buffer_base = static_cast<byte *>
-		(ut_malloc((page_size / 4 + 1) *
-			   page_size));
+		(malloc((page_size / 4 + 1) * page_size));
 	incremental_buffer = static_cast<byte *>
 		(ut_align(incremental_buffer_base,
 			  page_size));
@@ -4787,8 +4785,7 @@ xtrabackup_apply_delta(
 		incremental_buffers++;
 	}
 
-	if (incremental_buffer_base)
-		ut_free(incremental_buffer_base);
+	free(incremental_buffer_base);
 	if (src_file != OS_FILE_CLOSED)
 		os_file_close(src_file);
 	if (dst_file != OS_FILE_CLOSED)
@@ -4796,8 +4793,7 @@ xtrabackup_apply_delta(
 	return TRUE;
 
 error:
-	if (incremental_buffer_base)
-		ut_free(incremental_buffer_base);
+	free(incremental_buffer_base);
 	if (src_file != OS_FILE_CLOSED)
 		os_file_close(src_file);
 	if (dst_file != OS_FILE_CLOSED)
@@ -5618,7 +5614,7 @@ skip_check:
 		byte*		page;
 		byte*		buf = NULL;
 
-		buf = static_cast<byte *>(ut_malloc(UNIV_PAGE_SIZE * 2));
+		buf = static_cast<byte *>(malloc(UNIV_PAGE_SIZE * 2));
 		page = static_cast<byte *>(ut_align(buf, UNIV_PAGE_SIZE));
 
 		it = datafiles_iter_new(fil_system);
@@ -5757,7 +5753,7 @@ next_node:
 			mutex_exit(&(dict_sys->mutex));
 		}
 
-		ut_free(buf);
+		free(buf);
 	}
 
 	/* print the binary log position  */
