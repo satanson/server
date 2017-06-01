@@ -6214,7 +6214,9 @@ void setup_error_messages()
 {
   static  const char *all_msgs[ER_ERROR_LAST - ER_ERROR_FIRST +1];
   my_default_lc_messages = &my_locale_en_US;
+#if 0 // FIXME: adjust for ERRORS_PER_RANGE
   my_default_lc_messages->errmsgs->errmsgs = all_msgs;
+#endif
 
   /* Populate the necessary error messages */
   struct {
