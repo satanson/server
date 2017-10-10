@@ -1,0 +1,3 @@
+start
+br sql/sql_plugin.cc:978 if $_streq(pi->name.str,"CSV")
+continue

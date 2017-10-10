@@ -350,6 +350,7 @@ INCLUDE(maintainer)
 
 IF(WITH_UNIT_TESTS)
  ENABLE_TESTING()
+ ADD_SUBDIRECTORY(unittest)
  ADD_SUBDIRECTORY(unittest/mytap)
  ADD_SUBDIRECTORY(unittest/strings)
  ADD_SUBDIRECTORY(unittest/examples)

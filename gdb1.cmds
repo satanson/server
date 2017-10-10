@@ -1,0 +1,9 @@
+set args --debug='i:t:d:N:F:L:r:O,/home/grakra/mysqld.trace:f,ha_tina*,handler*,handlerton*' --console
+start
+
+#watch *builtin_maria_csv_plugin
+#rwatch builtin_maria_csv_plugin
+#rwatch builtin_maria_csv_plugin->type
+#rwatch builtin_maria_csv_plugin->init
+br tina_init_func
+br get_new_handler

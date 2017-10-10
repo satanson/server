@@ -1,0 +1,4 @@
+set args --debug='i:t:d:N:F:L:r:o,/home/grakra/mysqld.trace:f,*plugin*,*csv*,*tina*' --console
+start
+br sql/sql_plugin.cc:978 if pi->name.str == "CSV"
+continue
